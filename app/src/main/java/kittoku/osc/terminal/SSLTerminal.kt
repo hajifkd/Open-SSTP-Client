@@ -98,6 +98,25 @@ internal class SSLTerminal(private val bridge: ClientBridge) {
             SSLContext.getInstance(selectedVersion).also {
                 it.init(null, createTrustManagers(), null)
             }
+        } else if (!getBooleanPrefValue(OscPrefKey.SSL_DO_VERIFY, bridge.prefs)) {
+            // Use with non-trivial ssl versions
+            // TODO make its own pref
+            SSLContext.getInstance(selectedVersion).also {
+                it.init(null, arrayOf(object: X509TrustManager {
+                    override fun checkClientTrusted(p0: Array<out X509Certificate>?, p1: String?) {
+                        // do nothing
+                    }
+
+                    override fun checkServerTrusted(p0: Array<out X509Certificate>?, p1: String?) {
+                        // do nothing again
+                    }
+
+                    override fun getAcceptedIssuers(): Array<X509Certificate> {
+                        return arrayOf()
+                    }
+
+                }), null)
+            }
         } else {
             SSLContext.getDefault()
         }
